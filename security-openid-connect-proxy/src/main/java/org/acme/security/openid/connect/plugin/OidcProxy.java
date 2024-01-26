@@ -1,8 +1,7 @@
 package org.acme.security.openid.connect.plugin;
 
 import java.net.URI;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -26,45 +25,25 @@ import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
-import io.vertx.ext.web.client.WebClientOptions;
-import io.vertx.mutiny.core.Vertx;
 import io.vertx.mutiny.core.buffer.Buffer;
 import io.vertx.mutiny.ext.web.client.HttpRequest;
 import io.vertx.mutiny.ext.web.client.HttpResponse;
 import io.vertx.mutiny.ext.web.client.WebClient;
-import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
-import jakarta.inject.Inject;
 
 @ApplicationScoped
 public class OidcProxy {
-    @Inject
-    Vertx vertx;
-    WebClient client;
-    
     final OidcConfigurationMetadata oidcMetadata;
     final OidcTenantConfig oidcTenantConfig;
     final OidcProxyConfig oidcProxyConfig;
+    final WebClient client;
     
     public OidcProxy(TenantConfigBean tenantConfig, OidcProxyConfig oidcProxyConfig) {
     	this.oidcTenantConfig = tenantConfig.getDefaultTenant().getOidcTenantConfig();
     	this.oidcMetadata = tenantConfig.getDefaultTenant().getOidcMetadata();
     	this.oidcProxyConfig = oidcProxyConfig;
-    }
-    
-    @PostConstruct
-    void initWebClient() {
-        client = WebClient.create(vertx, new WebClientOptions());
-    }
-    
-    @PreDestroy
-    void closeVertxClient() {
-        if (client != null) {
-            client.close();
-            client = null;
-        }
+    	this.client = tenantConfig.getDefaultTenant().getOidcProviderClient().getWebClient();
     }
     
     public void setup(@Observes Router router) {
@@ -93,7 +72,7 @@ public class OidcProxy {
                     .append(OidcConstants.CODE_FLOW_CODE);
             // client_id
             codeFlowParams.append("&").append(OidcConstants.CLIENT_ID).append("=")
-                    .append(urlEncode(getClientId(queryParams.get(OidcConstants.CLIENT_ID))));
+                    .append(OidcCommonUtils.urlEncode(getClientId(queryParams.get(OidcConstants.CLIENT_ID))));
             // scope
             codeFlowParams.append("&").append(OidcConstants.TOKEN_SCOPE).append("=")
                     .append(encodeScope(queryParams.get(OidcConstants.TOKEN_SCOPE)));
@@ -103,7 +82,7 @@ public class OidcProxy {
 
             // redirect_uri
             codeFlowParams.append("&").append(OidcConstants.CODE_FLOW_REDIRECT_URI).append("=")
-                    .append(urlEncode(getRedirectUri(context, queryParams.get(OidcConstants.CODE_FLOW_REDIRECT_URI))));
+                    .append(OidcCommonUtils.urlEncode(getRedirectUri(context, queryParams.get(OidcConstants.CODE_FLOW_REDIRECT_URI))));
 
             String authorizationURL = oidcMetadata.getAuthorizationUri() + "?"  + codeFlowParams.toString();
             
@@ -213,16 +192,9 @@ public class OidcProxy {
         }
         buffer.appendString(name);
         buffer.appendByte((byte)'=');
-        buffer.appendString(urlEncode(value));
+        buffer.appendString(OidcCommonUtils.urlEncode(value));
     }
 
-    public static String urlEncode(String value) {
-        try {
-            return URLEncoder.encode(value, StandardCharsets.UTF_8.name());
-        } catch (Exception ex) {
-            throw new RuntimeException(ex);
-        }
-    }
     
     private String getClientId(String providedClientId) {
     	return oidcTenantConfig.clientId.orElse(providedClientId);
@@ -242,20 +214,9 @@ public class OidcProxy {
 	}
     
     private String encodeScope(String providedScope) {
-    	List<String> configuredScopes = oidcTenantConfig.authentication.scopes.orElse(List.of("openid"));
-        Set<String> scopes = new HashSet<>();
-        scopes.addAll(configuredScopes);
-        if (providedScope != null) {
-        	scopes.add(providedScope);
-        }
-        StringBuilder sb = new StringBuilder();
-        for (String scope : scopes) {
-        	if (sb.length() != 0) {
-        		sb.append("%20");
-            }
-            sb.append(urlEncode(scope));
-        }
-        return sb.toString();
+    	Set<String> scopes = new HashSet<>(OidcUtils.getAllScopes(oidcTenantConfig));
+    	scopes.addAll(providedScope != null ? Arrays.asList(providedScope.split(" ")) : List.of());
+    	return OidcCommonUtils.urlEncode(String.join(" ", scopes));
 	}
     
     private String buildUri(RoutingContext context, String path) {
