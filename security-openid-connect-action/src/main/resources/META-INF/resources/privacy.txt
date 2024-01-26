@@ -1,0 +1,27 @@
+1. Introduction
+
+Welcome to Quarkus UserName Action. This privacy policy explains our practices regarding the collection, use, and disclosure of personal information that you may provide through this service.
+
+2. No Data Storage
+
+We value your privacy and data security. Quarkus UserName Action does not store any personal data provided by its users. All interactions are designed to be transient and no record of personal data is retained.
+
+3. Data Collection and Use
+
+Since Quarkus UserName Action does not store user data, we do not collect or use your personal information.
+
+4. Third-Party Services
+
+This service does not rely on any third-party services that collect or store your personal data.
+
+5. Data Security
+
+Given that no user data is stored, there is no risk of data breaches pertaining to personal user information on Quarkus UserName Action.
+
+6. Changes to This Privacy Policy
+
+We may update our Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page.
+
+7. Contact Us
+
+If you have any questions about this Privacy Policy, please contact us.

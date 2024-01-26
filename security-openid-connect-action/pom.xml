@@ -6,7 +6,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.acme</groupId>
-    <artifactId>security-openid-connect-proxy</artifactId>
+    <artifactId>security-openid-connect-action</artifactId>
     <version>1.0.0-SNAPSHOT</version>
 
     <properties>
@@ -33,8 +33,17 @@
 
     <dependencies>
         <dependency>
+            <groupId>org.acme</groupId>
+            <artifactId>security-openid-connect-proxy</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
             <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-oidc</artifactId>
+            <artifactId>quarkus-resteasy-reactive</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-smallrye-openapi</artifactId>
         </dependency>
     </dependencies>
 
@@ -51,19 +60,6 @@
                         </goals>
                     </execution>
                 </executions>
-            </plugin>
-            <plugin>
-                <groupId>io.smallrye</groupId>
-                <artifactId>jandex-maven-plugin</artifactId>
-                <version>3.1.6</version>
-                <executions>
-                    <execution>
-                       <id>make-index</id>
-                           <goals>
-                                <goal>jandex</goal>
-                           </goals>
-                    </execution>
-               </executions>
             </plugin>
         </plugins>
     </build>
